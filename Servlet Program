@@ -1,0 +1,192 @@
+/* Write a program a servlet to track a user. That is:
+1. A new user must register with a user name and password. A new user cannot login.
+2. The old user must login. The old user cannot re-register. */
+
+Answer:
+
+
+
+<!--The name of the html document is: Main.html Do not change it-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Assignment 9</title>
+</head>
+<body>
+  <form action="http://localhost:8080/Project/Main">
+    <center>
+    <br><br>
+    User Name:
+    <input name="personName" type="text" value="">
+    <br>
+    Password:&nbsp;&nbsp;
+    <input name="personPassword" type="password" value="">
+    <br><br>
+    <input name="register" type="Submit" value="Register">
+    <input name="login" type="Submit"    value="Login">    
+    </center>
+  </form>
+</body>
+</html>
+
+
+
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Servlet implementation class Main
+ */
+@WebServlet("/Main")
+public class Main extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	public String username;
+	public String password;
+	public String register;
+	public String login;
+	public String Message;
+	public boolean flag; // Set flag for display Username only valid Register and Login click.
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public Main() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		username = request.getParameter("personName"); 
+		password = request.getParameter("personPassword");
+		register = request.getParameter("register");
+		login = request.getParameter("login");
+		//Check for input values. They should not blank or empty.
+		boolean check_result = check(username, password);
+			// This condition becomes true when user clicks on the Register button.
+			if(check_result == true && register != null) { 
+				System.out.println("Regis \n");
+				processRegister(request, response);
+			// This condition becomes true when user clicks on the Login button.
+			} else if(check_result == true && login != null) {
+				System.out.println("log \n");
+				processLogin(request, response);
+			} else {
+				//This message displys when Username and Password both fields are empty.
+				Message = "Please enter Username and Password!";
+				flag = true;
+				displaymessage(response);
+			}
+		response.getWriter().append("Served at: ").append(request.getContextPath());
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// Get input values from the FORM
+		
+		
+		doGet(request, response);
+	}
+	
+	private boolean check(String username, String password) {
+		boolean found = false;
+	    if (username != null && password != null && !username.isEmpty() && !password.isEmpty()) {
+	    	found = true;
+	    }else {
+	    	found = false;
+	    }
+	    
+		return found;
+	}
+	
+	private void processRegister(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	
+		Cookie[] cookies = request.getCookies(); // Get an array of Cookies associated with this domain
+		if (cookies != null && cookies.length > 0) {
+			//If there are multiple cookies. Count those cookies and try to find out cookie for enter Username.
+			for(int i=0; i<cookies.length; i++) { 
+				Cookie c = cookies[i];
+				if ((c.getName().equals("Username")) && (c.getValue().equals(username))){
+	      			Message = "You have already registered. Login Please!";
+	      			flag = false;
+	      			displaymessage(response);
+	      	   	}else {
+	      	   	makeCookie(response);
+	      	   	}
+			}
+		}else {
+			makeCookie(response);
+		}
+	}
+	
+	private void processLogin(HttpServletRequest request, HttpServletResponse response) throws IOException{
+
+		  Cookie[] cookies = request.getCookies();
+		  if (cookies != null && cookies.length > 0) {
+			  for(int i=0; i<cookies.length; i++) {
+				  Cookie c = cookies[i];
+		        	if ((c.getName().equals("Username")) && (c.getValue().equals(username))){
+		        		Message = "You are log in. WElCOME BACK!";
+		        	}else {
+		          		Message = "please Register first to login.";
+		          		flag = true;
+		          	}
+			  }
+		  }else {
+      		Message = "please Register first to login.";
+      		flag = true;
+      		
+      	}
+	     
+	      displaymessage(response);
+	}
+	
+	private void makeCookie(HttpServletResponse response) throws IOException{
+		Cookie aCookie = new Cookie("Username", username); //Creates cookie  for Username
+	    aCookie.setMaxAge(60*60*24); // Set expiry for 24 hours
+	    response.addCookie(aCookie); //Add cookie
+	    Message = "You are log in succesfully! (Cookie is set)";
+	    flag = false;
+	    displaymessage(response);
+	    
+	  }
+	
+	private void displaymessage(HttpServletResponse response) throws IOException {
+		// Set response content type
+	      response.setContentType("text/html");
+	      
+	      PrintWriter out = response.getWriter();
+	      String docType =
+	         "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
+	      
+	      out.println(docType +
+	         "<html>\n" +
+	            "<head>"+
+	               "<title>" + "Assignment 4" + "</title>"+
+	            "</head>\n" +
+	            "<body bgcolor = \"#f0f0f0\">\n" +
+	               "<h1 align = \"center\" style=\"color:blue;\">" + Message + "</h1>\n");
+	            if(username != null && !username.isEmpty() && flag == false) {
+	            	if(login == "Login") {}
+	            	 out.println("<ul>\n" +
+	   	                  "  <li><b >First Name</b>: "
+	   	                  + "<b style=\"color:#288A0F;font-size: 20px\">"+username+"</b>" + "\n" + 
+	   	               "</ul>\n");
+	            	 
+	            }
+	      out.println("</body>"+
+	    		  "</html>"); 
+	      out.close();
+	} }
